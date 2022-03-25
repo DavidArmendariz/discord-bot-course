@@ -1,0 +1,14 @@
+{
+  "name": "discord-bot-course",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "David Armendariz <darmendariz1998@outlook.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.16.0",
+    "@typescript-eslint/parser": "^5.16.0",
+    "eslint": "^8.11.0",
+    "prettier": "^2.6.1",
+    "typescript": "^4.6.3"
+  }
+}
