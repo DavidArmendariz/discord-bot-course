@@ -4,6 +4,9 @@
   "main": "index.js",
   "author": "David Armendariz <darmendariz1998@outlook.com>",
   "license": "MIT",
+  "engines": {
+    "node": "16.14.2"
+  },
   "scripts": {
     "lint": "eslint src --ext .ts --fix",
     "format": "prettier --write src/**/*.ts",
