@@ -1,4 +1,5 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
+import { MessageEmbed } from 'discord.js';
 import { SlashCommand } from '../types';
 
 const EMOJIS = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
@@ -70,6 +71,7 @@ export const PollCommand: SlashCommand = {
       await interaction.reply({
         content: 'You can only use this command inside a server.',
       });
+      return;
     }
 
     if (!interaction.channel) {
@@ -77,6 +79,56 @@ export const PollCommand: SlashCommand = {
         content:
           'You can only use this command in a channel or the client does not have the correct intents.',
       });
+      return;
     }
+
+    const buildEmbed = () => {
+      let formattedTimeUnit: TimeUnit | string = timeUnit;
+      if (time === 1) {
+        // 1 hours => 1 hour
+        formattedTimeUnit = formattedTimeUnit.slice(0, -1);
+      }
+
+      const embed = new MessageEmbed()
+        .setAuthor({
+          name: member.displayName,
+          iconURL: user.displayAvatarURL(),
+        })
+        .setTitle(title || 'Poll')
+        .setDescription(
+          description ||
+            `React to vote. The poll is going to be available for ${time} ${formattedTimeUnit}`
+        )
+        .setColor('BLUE')
+        .setFooter({ text: 'In case of a draw, a random is selected.' });
+
+      shownOptions.forEach(({ label, value, emoji }) => {
+        embed.addField(label, `${emoji} - ${value}`);
+      });
+
+      return embed;
+    };
+
+    const { options, user, guildId, client } = interaction;
+    const guild = interaction.guild || (await client.guilds.fetch(guildId));
+    const member =
+      guild.members.cache.get(user.id) || (await guild.members.fetch(user.id));
+    const shownOptions = OPTIONS.map(({ name, description }, i) => ({
+      emoji: EMOJIS[i],
+      label: description,
+      value: options.getString(name),
+    })).filter(
+      (
+        shownOption
+      ): shownOption is { emoji: string; label: string; value: string } =>
+        !!shownOption.value
+    );
+    const time = options.getInteger('time', true);
+    const timeUnit = options.getString('time_unit', true) as TimeUnit;
+    const title = options.getString('title');
+    const description = options.getString('description');
+    const dmNotify = options.getBoolean('dm_notify') ?? true;
+
+    const embed = buildEmbed();
   },
 };
