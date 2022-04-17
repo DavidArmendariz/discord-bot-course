@@ -139,6 +139,29 @@ export const PollCommand: SlashCommand = {
       });
     };
 
+    const buildReactionsCollector = () => {
+      const shownEmojisMap = shownOptions.reduce<Record<string, boolean>>(
+        (map, { emoji }) => {
+          map[emoji] = true;
+          return map;
+        },
+        {}
+      );
+
+      return message.createReactionCollector({
+        time: timeInMs,
+        filter: (reaction) => {
+          const emoji = reaction.emoji.name;
+
+          if (!emoji) {
+            return false;
+          }
+
+          return !!shownEmojisMap[emoji];
+        },
+      });
+    };
+
     const { options, user, guildId, client, channel } = interaction;
     const guild = interaction.guild || (await client.guilds.fetch(guildId));
     const member =
@@ -173,5 +196,8 @@ export const PollCommand: SlashCommand = {
 
     const timeInMs = getTimeInMs();
     const componentsCollector = buildComponentsCollector();
+    const reactionsCollector = buildReactionsCollector();
+
+    const frequencies: Record<string, number> = {};
   },
 };
