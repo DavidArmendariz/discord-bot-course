@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
-import { MessageEmbed } from 'discord.js';
+import { MessageActionRow, MessageButton, MessageEmbed } from 'discord.js';
 import { SlashCommand } from '../types';
 
 const EMOJIS = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
@@ -100,7 +100,7 @@ export const PollCommand: SlashCommand = {
             `React to vote. The poll is going to be available for ${time} ${formattedTimeUnit}`
         )
         .setColor('BLUE')
-        .setFooter({ text: 'In case of a draw, a random is selected.' });
+        .setFooter({ text: 'In case of a draw, a random option is selected.' });
 
       shownOptions.forEach(({ label, value, emoji }) => {
         embed.addField(label, `${emoji} - ${value}`);
@@ -109,7 +109,37 @@ export const PollCommand: SlashCommand = {
       return embed;
     };
 
-    const { options, user, guildId, client } = interaction;
+    const buildButtons = () => {
+      return new MessageActionRow().addComponents([
+        new MessageButton()
+          .setCustomId('cancel')
+          .setLabel('Cancel')
+          .setStyle('DANGER'),
+        new MessageButton()
+          .setCustomId('end-poll')
+          .setLabel('End poll now')
+          .setStyle('PRIMARY'),
+      ]);
+    };
+
+    const getTimeInMs = () => {
+      switch (timeUnit) {
+        case TimeUnit.seconds:
+          return time * 1000;
+        case TimeUnit.minutes:
+          return time * 60 * 1000;
+        case TimeUnit.hours:
+          return time * 3600 * 1000;
+      }
+    };
+
+    const buildComponentsCollector = () => {
+      return message.createMessageComponentCollector({
+        time: timeInMs,
+      });
+    };
+
+    const { options, user, guildId, client, channel } = interaction;
     const guild = interaction.guild || (await client.guilds.fetch(guildId));
     const member =
       guild.members.cache.get(user.id) || (await guild.members.fetch(user.id));
@@ -130,5 +160,18 @@ export const PollCommand: SlashCommand = {
     const dmNotify = options.getBoolean('dm_notify') ?? true;
 
     const embed = buildEmbed();
+    const buttons = buildButtons();
+
+    await interaction.reply({
+      content: 'Poll successfully created',
+    });
+
+    const message = await channel.send({
+      embeds: [embed],
+      components: [buttons],
+    });
+
+    const timeInMs = getTimeInMs();
+    const componentsCollector = buildComponentsCollector();
   },
 };
