@@ -1,5 +1,6 @@
 import { SlashCommand } from '../types';
 import { AddCommand } from './add';
+import { GetRandomAnimeCommand } from './get-random-anime';
 import { GoogleCommand } from './google';
 import { HelloCommand } from './hello';
 import { PollCommand } from './poll';
@@ -11,4 +12,5 @@ export const SlashCommands: SlashCommand[] = [
   GoogleCommand,
   UserInfoCommand,
   PollCommand,
+  GetRandomAnimeCommand,
 ];
