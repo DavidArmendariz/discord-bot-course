@@ -162,6 +162,104 @@ export const PollCommand: SlashCommand = {
       });
     };
 
+    const onComponentsCollect = () => {
+      componentsCollector.on('collect', async (componentInteraction) => {
+        if (componentInteraction.customId === 'cancel') {
+          if (componentInteraction.user.id !== user.id) {
+            await componentInteraction.fetchReply();
+            await componentInteraction.followUp({
+              content: 'You cannot cancel this poll',
+              ephemeral: true,
+            });
+            return;
+          }
+
+          reactionsCollector.stop('cancel-poll');
+          return;
+        }
+
+        if (componentInteraction.customId === 'end-poll') {
+          if (componentInteraction.user.id !== user.id) {
+            await componentInteraction.fetchReply();
+            await componentInteraction.followUp({
+              content: 'You cannot end this poll',
+              ephemeral: true,
+            });
+            return;
+          }
+
+          reactionsCollector.stop();
+          return;
+        }
+      });
+    };
+
+    const addReactions = async () => {
+      for (let i = 0; i < shownOptions.length; i++) {
+        if (tooFast) {
+          return;
+        }
+        await message.react(shownOptions[i].emoji);
+      }
+    };
+
+    const onReactionsEnd = () => {
+      reactionsCollector.on('end', async (collected, reason) => {
+        let mostFrequentEmoji = '';
+        let maxCount = 0;
+
+        for (const [key, value] of collected.entries()) {
+          if (value.count > maxCount) {
+            mostFrequentEmoji = key;
+            maxCount = value.count;
+          }
+
+          frequencies[key] = value.count;
+        }
+
+        tooFast = shownOptions.length !== Object.keys(frequencies).length;
+        const winner = shownOptions.find(
+          ({ emoji }) => emoji === mostFrequentEmoji
+        );
+
+        embed
+          .setColor('GREEN')
+          .setDescription(`The poll has ended. The winner is: ${winner?.value}`)
+          .setFields([]);
+
+        if (tooFast) {
+          embed
+            .setDescription(
+              'Oops! The poll time is too low for reactions to be added. Consider increasing it.'
+            )
+            .setColor('RED')
+            .setFooter(null);
+        } else {
+          shownOptions.forEach(({ value, emoji }) => {
+            embed.addField(
+              `Votes for "${value}"`,
+              frequencies[emoji].toString()
+            );
+          });
+        }
+
+        if (reason === 'cancel-poll') {
+          embed
+            .setColor('RED')
+            .setDescription('This poll was cancelled.')
+            .setFooter(null);
+        }
+
+        await message.reactions.removeAll();
+
+        await message.edit({ embeds: [embed], components: [] });
+
+        if (dmNotify && reason !== 'cancel-poll' && !tooFast) {
+          await user.send(`Your poll (${message.url}) ended successfully.`);
+        }
+      });
+    };
+
     const { options, user, guildId, client, channel } = interaction;
     const guild = interaction.guild || (await client.guilds.fetch(guildId));
     const member =
@@ -199,5 +297,12 @@ export const PollCommand: SlashCommand = {
     const reactionsCollector = buildReactionsCollector();
 
     const frequencies: Record<string, number> = {};
+    let tooFast = false;
+
+    onReactionsEnd();
+
+    await addReactions();
+
+    onComponentsCollect();
   },
 };
