@@ -1,5 +1,6 @@
-import { SlashCommandBuilder } from '@discordjs/builders';
+import { hyperlink, SlashCommandBuilder } from '@discordjs/builders';
 import axios from 'axios';
+import { MessageEmbed } from 'discord.js';
 import { SlashCommand } from '../types';
 
 const GET_RANDOM_ANIME_URL = 'https://api.jikan.moe/v4/random/anime';
@@ -34,6 +35,12 @@ export const GetRandomAnimeCommand: SlashCommand = {
     .setName('get_random_anime')
     .setDescription('Returns a random anime'),
   async run(interaction) {
+    const addField = (field: string, value: string | number) => {
+      if (value) {
+        embed.addField(field, value.toString(), true);
+      }
+    };
+
     await interaction.deferReply();
 
     const response = await axios.get<GetRandomAnimeResponse['data']>(
@@ -66,5 +73,32 @@ export const GetRandomAnimeCommand: SlashCommand = {
         themes,
       },
     } = response;
+
+    const embed = new MessageEmbed()
+      .setTitle(title)
+      .setURL(url)
+      .setImage(image_url)
+      .setAuthor({ name: title_japanese })
+      .setDescription(synopsis);
+
+    addField('Rank', rank);
+    addField('Type', type);
+    addField('Score', score);
+    addField('Scoredy by', scored_by);
+    addField('Status', status);
+    addField('Rating', rating);
+    addField('Duration', duration);
+
+    const genresString = genres
+      .map(({ name, url }) => hyperlink(name, url))
+      .join('\n');
+    const themesString = themes
+      .map(({ name, url }) => hyperlink(name, url))
+      .join('\n');
+
+    addField('Genres', genresString);
+    addField('Themes', themesString);
+
+    await interaction.editReply({ embeds: [embed] });
   },
 };
