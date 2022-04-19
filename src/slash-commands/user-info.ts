@@ -68,4 +68,5 @@ export const UserInfoCommand: SlashCommand = {
       embeds: [embed],
     });
   },
+  help: 'This command returns the info of the user like the time when he/she joined to this server and to Discord, their profile picture, their roles, etc.',
 };
