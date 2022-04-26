@@ -35,6 +35,27 @@ export const AddRolesCommand: SlashCommand = {
       }
     };
 
+    const createRolesIfExist = async () => {
+      const existingRoles = await interaction.guild.roles.fetch();
+      const existingRolesMap = existingRoles.reduce<Record<string, boolean>>(
+        (result, { name }) => {
+          result[name] = true;
+          return result;
+        },
+        {}
+      );
+      for (const role of SELF_ROLES) {
+        if (existingRolesMap[role.name]) {
+          continue;
+        }
+        await interaction.guild.roles.create({
+          name: role.name,
+          color: role.color,
+          mentionable: false,
+        });
+      }
+    };
+
     const embed = buildEmbed();
 
     const message = await interaction.reply({
@@ -43,5 +64,6 @@ export const AddRolesCommand: SlashCommand = {
     });
 
     await reactToEmbed();
+    await createRolesIfExist();
   },
 };
