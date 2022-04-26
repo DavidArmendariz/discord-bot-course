@@ -1,5 +1,6 @@
 import { HelpArray, SlashCommand } from '../types';
 import { AddCommand } from './add';
+import { AddRolesCommand } from './add-roles';
 import { GetRandomAnimeCommand } from './get-random-anime';
 import { GoogleCommand } from './google';
 import { HelloCommand } from './hello';
@@ -14,6 +15,7 @@ const SlashCommands: SlashCommand[] = [
   UserInfoCommand,
   PollCommand,
   GetRandomAnimeCommand,
+  AddRolesCommand,
 ];
 
 const helpArray: HelpArray = SlashCommands.filter(
